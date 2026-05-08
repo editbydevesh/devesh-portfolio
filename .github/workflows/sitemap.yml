@@ -1,0 +1,33 @@
+name: Regenerate sitemap and check
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # daily at midnight UTC
+  push:
+    branches: [ main ]
+
+jobs:
+  regen-and-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Regenerate sitemap.gz
+        run: |
+          mkdir -p public
+          gzip -9 -c public/sitemap.xml > public/sitemap.xml.gz || true
+
+      - name: Commit regenerated gzip if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/sitemap.xml.gz
+          git diff --staged --quiet || (git commit -m "Regenerate sitemap.gz" && git push)
+
+      - name: Check sitemap reachable (primary)
+        run: |
+          if curl -I --max-time 10 https://www.designsbydevesh.me/sitemap.xml; then echo 'sitemap reachable'; else echo 'primary unreachable'; fi
+
+      - name: Check sitemap reachable (fallback)
+        run: |
+          if curl -I --max-time 10 https://devesh-portfolio-nine.vercel.app/sitemap.xml; then echo 'vercel reachable'; else echo 'fallback unreachable'; fi

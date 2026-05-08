@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.designsbydevesh.me/sitemap.xml
+Sitemap: https://www.designsbydevesh.me/sitemap-index.xml
