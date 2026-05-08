@@ -1,7 +1,7 @@
 import gsap from 'gsap';
 import Lenis from 'lenis';
 
-const routes = { home: 'index.html', projects: 'projects.html', photography: 'photography.html', services: 'services.html', about: 'about.html', contact: 'contact.html', 'project-1': 'project-1.html', 'project-2': 'project-2.html', 'project-3': 'project-3.html', 'project-4': 'project-4.html', 'project-5': 'project-5.html' };
+const routes = { home: '/home', projects: 'projects.html', photography: 'photography.html', services: 'services.html', about: 'about.html', contact: 'contact.html', 'project-1': 'project-1.html', 'project-2': 'project-2.html', 'project-3': 'project-3.html', 'project-4': 'project-4.html', 'project-5': 'project-5.html' };
 
 const siteData = {
   home: { title: 'Designs by Devesh', eyebrow: 'Editorial portfolio', copy: 'Work shaped by graphic design and a careful editorial eye. Every detail is considered — from the first mark to the final interaction.', cards: [{ title: 'Logo Design', meta: 'Identity systems' }, { title: 'Brand Identity', meta: 'Premium storytelling' }, { title: 'Poster Design', meta: 'Print and campaign language' }, { title: 'Clothing Graphic', meta: 'Fashion-led visual direction' }, { title: 'Packaging Design', meta: 'Product and packaging visuals' }, { title: 'Social Media Post', meta: 'Editorial content for digital' }] },
