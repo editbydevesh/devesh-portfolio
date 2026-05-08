@@ -9,5 +9,11 @@
       "destination": "/home",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/home",
+      "destination": "/home.html"
+    }
   ]
 }
