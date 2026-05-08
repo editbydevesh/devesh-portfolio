@@ -19,22 +19,27 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Write GSC service account key
+      - name: Validate OAuth secrets
         run: |
-          if [ -z "${{ secrets.GSC_SA_KEY }}" ]; then echo "No GSC_SA_KEY secret found"; exit 1; fi
-          echo "${{ secrets.GSC_SA_KEY }}" > /tmp/gsc-key.json
+          if [ -z "${{ secrets.GSC_CLIENT_ID }}" ]; then echo "No GSC_CLIENT_ID secret found"; exit 1; fi
+          if [ -z "${{ secrets.GSC_CLIENT_SECRET }}" ]; then echo "No GSC_CLIENT_SECRET secret found"; exit 1; fi
+          if [ -z "${{ secrets.GSC_REFRESH_TOKEN }}" ]; then echo "No GSC_REFRESH_TOKEN secret found"; exit 1; fi
+          if [ -z "${{ secrets.GSC_SITE_URL }}" ]; then echo "No GSC_SITE_URL secret found"; exit 1; fi
 
       - name: Create submit script
         run: |
           cat > submit-sitemap.js <<'JS'
 const {google} = require('googleapis');
-const path = require('path');
 (async function(){
-  const keyFile = '/tmp/gsc-key.json';
-  const siteUrl = process.env.GSC_SITE_URL || 'https://www.designsbydevesh.me';
+  const siteUrl = process.env.GSC_SITE_URL;
   try{
-    const auth = new google.auth.GoogleAuth({keyFile, scopes: ['https://www.googleapis.com/auth/webmasters']});
-    const client = await auth.getClient();
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GSC_CLIENT_ID,
+      process.env.GSC_CLIENT_SECRET,
+      'urn:ietf:wg:oauth:2.0:oob'
+    );
+    oauth2Client.setCredentials({ refresh_token: process.env.GSC_REFRESH_TOKEN });
+    const client = oauth2Client;
     const searchconsole = google.searchconsole({version: 'v1', auth: client});
     const feedpath = '/sitemap.xml';
     console.log('Submitting', feedpath, 'for', siteUrl);
@@ -52,5 +57,8 @@ JS
 
       - name: Submit sitemap
         env:
+          GSC_CLIENT_ID: ${{ secrets.GSC_CLIENT_ID }}
+          GSC_CLIENT_SECRET: ${{ secrets.GSC_CLIENT_SECRET }}
+          GSC_REFRESH_TOKEN: ${{ secrets.GSC_REFRESH_TOKEN }}
           GSC_SITE_URL: ${{ secrets.GSC_SITE_URL }}
         run: node submit-sitemap.js
