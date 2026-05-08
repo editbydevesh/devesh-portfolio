@@ -1,0 +1,56 @@
+name: Submit sitemap to Google Search Console
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # daily at 02:00 UTC
+  push:
+    branches: [ main ]
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Write GSC service account key
+        run: |
+          if [ -z "${{ secrets.GSC_SA_KEY }}" ]; then echo "No GSC_SA_KEY secret found"; exit 1; fi
+          echo "${{ secrets.GSC_SA_KEY }}" > /tmp/gsc-key.json
+
+      - name: Create submit script
+        run: |
+          cat > submit-sitemap.js <<'JS'
+const {google} = require('googleapis');
+const path = require('path');
+(async function(){
+  const keyFile = '/tmp/gsc-key.json';
+  const siteUrl = process.env.GSC_SITE_URL || 'https://www.designsbydevesh.me';
+  try{
+    const auth = new google.auth.GoogleAuth({keyFile, scopes: ['https://www.googleapis.com/auth/webmasters']});
+    const client = await auth.getClient();
+    const searchconsole = google.searchconsole({version: 'v1', auth: client});
+    const feedpath = '/sitemap.xml';
+    console.log('Submitting', feedpath, 'for', siteUrl);
+    const res = await searchconsole.sitemaps.submit({siteUrl, feedpath});
+    console.log('Response:', res.status, res.data || 'OK');
+  }catch(e){
+    console.error('Submit failed', e);
+    process.exit(1);
+  }
+})();
+JS
+
+      - name: Install dependencies
+        run: npm install googleapis@119
+
+      - name: Submit sitemap
+        env:
+          GSC_SITE_URL: ${{ secrets.GSC_SITE_URL }}
+        run: node submit-sitemap.js
