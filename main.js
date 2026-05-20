@@ -266,20 +266,62 @@ function setupForm() {
   const form = app.querySelector('form.contact-form');
   if (!form) return;
   
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const button = form.querySelector('button');
+    const pill = form.querySelector('.pill');
     if (!button) return;
     
-    const previous = button.textContent;
-    button.textContent = 'Message sent';
+    const formData = new FormData(form);
+    const data = {
+      name: formData.get('name'),
+      email: formData.get('email'),
+      message: formData.get('message'),
+    };
+    
+    // Disable button and show loading state
+    button.disabled = true;
+    const previousText = button.textContent;
+    button.textContent = 'Sending...';
     if (!prefersReducedMotion) gsap.to(button, { scale: 1.02, duration: 0.2, ease: 'power2.out' });
     
-    setTimeout(() => {
-      if (!prefersReducedMotion) gsap.to(button, { scale: 1, duration: 0.2, ease: 'power2.out' });
-      button.textContent = previous;
-      form.reset();
-    }, 1200);
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        button.textContent = 'Message sent!';
+        button.style.color = '#0acf83';
+        if (pill) pill.textContent = 'Thank you!';
+        form.reset();
+        
+        setTimeout(() => {
+          button.textContent = previousText;
+          button.style.color = '';
+          button.disabled = false;
+          if (pill) pill.textContent = 'Responses within 48h';
+          if (!prefersReducedMotion) gsap.to(button, { scale: 1, duration: 0.2, ease: 'power2.out' });
+        }, 3000);
+      } else {
+        throw new Error(result.message || 'Failed to send message');
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      button.textContent = 'Error - try again';
+      button.style.color = '#ff7262';
+      
+      setTimeout(() => {
+        button.textContent = previousText;
+        button.style.color = '';
+        button.disabled = false;
+        if (!prefersReducedMotion) gsap.to(button, { scale: 1, duration: 0.2, ease: 'power2.out' });
+      }, 2000);
+    }
   });
 }
 
